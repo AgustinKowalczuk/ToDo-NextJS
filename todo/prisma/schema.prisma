@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// schema.prisma
+
+model User {
+  id                 Int                @id @default(autoincrement())
+
+  name               String
+  password           String
+  email              String             @unique
+  updatedAt          DateTime           @updatedAt
+  createdAt          DateTime           @default(now())
+
+  todos              Todo[]             @relation("TodoToUser")
+  friends            User[]             @relation("Friendship", references: [id])
+  assignedTodos      Todo[]             @relation("AssignedToUsers", references: [id])
+  createdTodos       Todo[]             @relation("UserToCreatedTodos") // Nueva relación
+  sentFriendRequests FriendshipRequest[] @relation("SentRequests", fields: [senderId], references: [id])
+  receivedFriendRequests FriendshipRequest[] @relation("ReceivedRequests", fields: [receiverId], references: [id])
+}
+
+
+model Todo {
+  id       Int      @id @default(autoincrement())
+
+  creatorId Int     
+  title    String
+  content  String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  assignedUsers User[] @relation("AssignedToUsers", references: [id])
+  creator  User     @relation("UserToCreatedTodos", fields: [creatorId], references: [id]) // Nueva relación
+}
+
+
+model FriendshipRequest {
+  id         Int       @id @default(autoincrement())
+  
+  senderId   Int
+  receiverId Int
+  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime  @default(now())
+  status     String    @default("pending")
+
+  sender     User      @relation("SentRequests", fields: [senderId], references: [id])
+  receiver   User      @relation("ReceivedRequests", fields: [receiverId], references: [id])
+}
+
